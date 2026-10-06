@@ -6,22 +6,22 @@ Avant de coder un système de reconnaissance faciale, il est essentiel de maîtr
 
 La CNIL (Commission Nationale de l'Informatique et des Libertés) souligne une distinction fondamentale : **la détection de visage** (repérer la présence d'un visage) ne doit pas être confondue avec **la reconnaissance faciale**, qui vise à identifier une personne.
 
-Dans ton projet, tu utiliseras les deux :
+Dans ce projet, nous utiliserons les deux :
 - **Détection** : pour localiser les visages dans l'image (bounding box).
 - **Identification** (aussi appelée "reconnaissance 1:N") : pour trouver à qui appartient le visage parmi les étudiants enregistrés.
 
-Il existe aussi la **vérification** (1:1), qui confirme si une personne est bien celle qu'elle prétend être, mais ce n'est pas ce que tu demandes ici.
+Il existe aussi la **vérification** (1:1), qui confirme si une personne est bien celle qu'elle prétend être, mais ce n'est pas ce qui est demandé ici.
 
-**À retenir** : Ton système fera de l'identification (1:N) avec rejet possible ("Unknown") si le score de similarité est trop faible.
+**À retenir** : Ce système fera de l'identification (1:N) avec rejet possible ("Unknown") si le score de similarité est trop faible.
 
 ---
 
 ## ⚖️ Cadre éthique et légal : la base incontournable
 
-La reconnaissance faciale traite des **données biométriques**, considérées comme des données sensibles au sens du RGPD (article 4-14). Sans cadre juridique approprié, tu t'exposes à des risques légaux et éthiques majeurs.
+La reconnaissance faciale traite des **données biométriques**, considérées comme des données sensibles au sens du RGPD (article 4-14). Sans cadre juridique approprié, on s'expose à des risques légaux et éthiques majeurs.
 
 ### Consentement explicite
-Le RGPD exige un consentement **"libre, spécifique, éclairé et univoque"**. Pour ton projet pédagogique, chaque étudiant photographié doit donner son accord écrit après avoir été informé de l'usage strictement scolaire des données.
+Le RGPD exige un consentement **"libre, spécifique, éclairé et univoque"**. Pour ce projet pédagogique, chaque étudiant photographié doit donner son accord écrit après avoir été informé de l'usage strictement scolaire des données.
 
 ### Principes de responsabilité (Responsible AI)
 Un guide de Microsoft Azure sur les considérations de détection et reconnaissance faciales recommande plusieurs bonnes pratiques :
@@ -31,9 +31,9 @@ Un guide de Microsoft Azure sur les considérations de détection et reconnaissa
 - **Sécurité** : chiffre les données au repos et en transit, contrôle les accès, journalise les opérations.
 
 ### Fairness et biais
-Évalue les performances de ton système sur différents sous-groupes (âge, genre, carnation) pour détecter d'éventuels biais. Utilise un dataset diversifié pour l'entraînement et les tests.
+Évaluez les performances du système sur différents sous-groupes (âge, genre, carnation) pour détecter d'éventuels biais. Utilisez un dataset diversifié pour l'entraînement et les tests.
 
-**Pour ton projet** : Rédige une note d'information et une autorisation d'utilisation d'image signée par chaque étudiant. Précise la durée de conservation (ex. : jusqu'à la fin de l'année scolaire) et l'usage exclusivement pédagogique.
+**Pour ce projet** : Rédigez une note d'information et une autorisation d'utilisation d'image signée par chaque étudiant. Précise la durée de conservation (ex. : jusqu'à la fin de l'année scolaire) et l'usage exclusivement pédagogique.
 
 ---
 
@@ -60,8 +60,8 @@ Une étude comparative de 2026 a analysé trois bibliothèques majeures : `face_
 | **OpenCV** (méthodes classiques : Eigenfaces, Fisherfaces, LBPH) | Apprentissage statistique | Rapide, léger | Faible précision en conditions réelles |
 | **DeepFace** | Ensemble de modèles deep learning (VGG-Face, ArcFace, Facenet) | Haute précision (ArcFace ≈ 99,65 % sur MegaFace) | Nécessite plus de puissance de calcul (120 ms/frame) |
 
-### Recommandations pour ton projet (5 étudiants, ~100-200 images)
-Pour un **petit dataset pédagogique**, `face_recognition` est un excellent point de départ : elle est facile à prendre en main et suffisamment précise pour 5 personnes. Si tu veux monter en compétence sur les embeddings, `DeepFace` avec le modèle **Facenet** ou **ArcFace** offre un bon compromis.
+### Recommandations pour ce projet (5 étudiants, ~100-200 images)
+Pour un **petit dataset pédagogique**, `face_recognition` est un excellent point de départ : elle est facile à prendre en main et suffisamment précise pour 5 personnes. Si l'évolution en compétence sur les embeddings est à considérer, `DeepFace` avec le modèle **Facenet** ou **ArcFace** offre un bon compromis.
 
 Pour un système de taille moyenne (10 000 – 50 000 images), une étude de 2026 montre que **SFace** (un CNN compact produisant des embeddings 128-D) offre le meilleur équilibre : >95 % de précision sur LFW, 37 Mo de modèle, tourne efficacement sur CPU.
 
@@ -71,7 +71,7 @@ Pour un système de taille moyenne (10 000 – 50 000 images), une étude de 202
 
 ## 🖼️ Préparation des données : le nerf de la guerre
 
-Ton dataset doit être **structuré, propre et représentatif**. Voici les étapes clés :
+Notre dataset doit être **structuré, propre et représentatif**. Voici les étapes clés :
 
 ### 1. Collecte
 - **5 étudiants** × **20 à 40 images** chacun.
@@ -96,13 +96,13 @@ dataset/
 └── ...
 ```
 
-**Pour ton test d'absence** : Garde une personne entièrement hors de la base d'entraînement. Elle servira à vérifier que le système retourne bien "Unknown" avec un score de confiance faible.
+**Pour le test d'absence** : Gardez une personne entièrement hors de la base d'entraînement. Elle servira à vérifier que le système retourne bien "Unknown" avec un score de confiance faible.
 
 ---
 
 ## 📊 Évaluation : quelles métriques utiliser ?
 
-Pour évaluer ton système, ne te limite pas à l'**accuracy**. Utilise un ensemble de métriques complémentaires :
+Pour évaluer ce système, ne nous limitons pas à l'**accuracy**. Utilisons un ensemble de métriques complémentaires :
 
 | Métrique | Définition | Utilité |
 |:--|:--|:--|
@@ -111,15 +111,15 @@ Pour évaluer ton système, ne te limite pas à l'**accuracy**. Utilise un ensem
 | **F1-score** | Moyenne harmonique de précision et rappel | Équilibre entre les deux |
 | **AUC (ROC)** | Aire sous la courbe ROC | Capacité à distinguer les classes à tous les seuils |
 
-**Interprétation** : Un F1-score élevé signifie que ton système identifie correctement les étudiants sans trop de faux positifs (identifier quelqu'un à tort) ni de faux négatifs (ne pas reconnaître un étudiant présent).
+**Interprétation** : Un F1-score élevé signifie que le système identifie correctement les étudiants sans trop de faux positifs (identifier quelqu'un à tort) ni de faux négatifs (ne pas reconnaître un étudiant présent).
 
-**Test crucial** : Mesure le taux de **faux positifs** sur la personne absente. Si ton système l'identifie à tort comme un étudiant connu, le seuil de confiance est trop bas.
+**Test crucial** : Mesure le taux de **faux positifs** sur la personne absente. Si le système l'identifie à tort comme un étudiant connu, le seuil de confiance est trop bas.
 
 ---
 
 ## 🛠️ Stack technique recommandée pour démarrer
 
-Voici une stack minimale et cohérente pour ton projet :
+Voici une stack minimale et cohérente pour ce projet :
 
 | Composant | Choix recommandé | Justification |
 |:--|:--|:--|
@@ -137,7 +137,7 @@ Voici une stack minimale et cohérente pour ton projet :
 
 ## 📝 Récapitulatif : ce qu'il faut retenir avant de coder
 
-1. **Conceptuel** : Détection ≠ identification. Ton système fait de l'identification 1:N avec rejet.
+1. **Conceptuel** : Détection ≠ identification. Ce système fait de l'identification 1:N avec rejet.
 2. **Légal** : Consentement explicite, minimisation des données, transparence, sécurité.
 3. **Architecture** : Pipeline en 4 étapes (détection → analyse → embedding → matching).
 4. **Bibliothèques** : `face_recognition` pour débuter ; `DeepFace` pour monter en compétence.
