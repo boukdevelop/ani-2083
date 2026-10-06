@@ -62,20 +62,6 @@ permet à 5 étudiants de travailler en parallèle sans se bloquer.
 
 **Rôle** : wrapper OpenCV autour du matériel caméra et de la conversion d'images.
 
-```python
-class CameraStream:
-    def __init__(self, index: int = 0, scale: float = 0.25): ...
-    def open(self) -> bool: ...              # ouvre cv2.VideoCapture(index)
-    def read_frame(self) -> tuple[bool, np.ndarray | None]: ...
-                                             # retourne (ok, frame_BGR)
-    def read_rgb(self) -> tuple[bool, np.ndarray | None]: ...
-                                             # frame convertie BGR -> RGB
-    def read_small(self) -> tuple[bool, np.ndarray | None, float]: ...
-                                             # frame réduite (25%) + facteur d'échelle
-    def is_opened(self) -> bool: ...
-    def release(self) -> None: ...           # libère la ressource caméra
-```
-
 **Détails clés** :
 
 - Réduction à **25 %** (`scale = 0.25`) pour accélérer la détection.
@@ -88,16 +74,6 @@ class CameraStream:
 ### 2.2 `dataset_manager.py` — Gestion & validation du dataset `[Étudiant 1]`
 
 **Rôle** : garantir que le dataset est exploitable avant l'encodage.
-
-```python
-def list_people(known_faces_dir: str = "data/known_faces") -> list[str]: ...
-def validate_dataset(known_faces_dir: str = "data/known_faces",
-                     min_images: int = 20,
-                     min_resolution: tuple[int, int] = (200, 200)) -> dict: ...
-    # -> { "etudiant_1": {"count": 32, "valid": True, "errors": []}, ... }
-def iter_images(person_dir: str) -> list[str]: ...
-def ensure_person_dir(name: str) -> str: ...  # crée data/known_faces/<name>/
-```
 
 **Détails clés** :
 
@@ -119,10 +95,6 @@ def ensure_person_dir(name: str) -> str: ...  # crée data/known_faces/<name>/
 - Crée automatiquement `data/known_faces/<nom_etudiant>/` et nomme `img_001.jpg`, `img_002.jpg`, …
 - Vérifie à la volée qu'un visage est détecté avant de sauvegarder.
 
-```python
-def capture_session(person_name: str, target: int = 30) -> int: ...
-    # -> nombre d'images réellement enregistrées
-```
 
 ---
 
@@ -130,16 +102,6 @@ def capture_session(person_name: str, target: int = 30) -> int: ...
 
 **Rôle** : transformer le dataset en base d'empreintes numériques (hors-ligne).
 
-```python
-def encode_image(image_path: str) -> np.ndarray | None: ...
-    # -> vecteur 128-D ou None si aucun visage
-
-def build_encodings(known_faces_dir: str = "data/known_faces") -> tuple[list, list]: ...
-    # -> (known_encodings: list[np.ndarray], known_names: list[str])
-
-def save_encodings(encodings, names, path: str = "encoded_faces.pkl") -> None: ...
-def load_encodings(path: str = "encoded_faces.pkl") -> tuple[list, list]: ...
-```
 
 **Détails clés** :
 
@@ -153,16 +115,6 @@ def load_encodings(path: str = "encoded_faces.pkl") -> tuple[list, list]: ...
 ### 2.5 `face_matcher.py` — Moteur de reconnaissance `[Étudiant 3]`
 
 **Rôle** : décider à qui appartient un visage détecté, ou rejeter (« Unknown »).
-
-```python
-TOLERANCE = 0.50  # seuil de distance euclidienne
-
-class FaceMatcher:
-    def __init__(self, encodings_path: str = "encoded_faces.pkl"): ...
-    def match(self, face_encoding: np.ndarray) -> tuple[str, float]:
-        # -> ("Nom", 87.3)  ou  ("Unknown / Inconnu", 41.0)
-    def match_many(self, face_encodings: list) -> list[tuple[str, float]]: ...
-```
 
 **Détails clés** :
 
@@ -179,17 +131,6 @@ class FaceMatcher:
 
 **Rôle** : interface utilisateur, dessin des bounding boxes, mise à jour dynamique.
 
-```python
-class FaceApp(ctk.CTk):
-    def __init__(self, matcher: FaceMatcher, camera: CameraStream): ...
-    def start_webcam(self) -> None: ...
-    def load_image(self) -> None: ...       # charge une image statique
-    def stop(self) -> None: ...
-    def _update_loop(self) -> None: ...     # appelé via self.after(...)
-
-def draw_annotation(frame_rgb, box, name, score) -> np.ndarray: ...
-def confidence_color(score: float) -> tuple[int, int, int]: ...
-```
 
 **Détails clés** :
 
@@ -206,14 +147,6 @@ def confidence_color(score: float) -> tuple[int, int, int]: ...
 ### 2.7 `main.py` — Point d'entrée & assemblage `[Étudiant 5]`
 
 **Rôle** : instancier les composants, lancer la boucle principale.
-
-```python
-def main() -> None:
-    matcher = FaceMatcher("encoded_faces.pkl")
-    camera = CameraStream(index=0, scale=0.25)
-    app = FaceApp(matcher=matcher, camera=camera)
-    app.mainloop()
-```
 
 **Boucle d'actualisation** (cœur de l'intégration) :
 
