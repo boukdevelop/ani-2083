@@ -1,8 +1,8 @@
 # 🏗️ Architecture du Projet — Reconnaissance Faciale
 
 > Ce document décrit l'architecture logicielle du projet, les modules, leurs **contrats
-> (interfaces)** et le flux de données. Il est aligné sur `week-1/explainHIm.md`,
-> `week-1/pré-requis.md` et `week-1/roadmap.md`.
+> (interfaces)** et le flux de données. Il est aligné sur `week-1/`[explainHIm.md](explainHIm.md),
+> `week-1/`[pré-requis.md](pré-requis.md) et `week-1/`[roadmap.md](roadmap.md).
 
 ---
 
