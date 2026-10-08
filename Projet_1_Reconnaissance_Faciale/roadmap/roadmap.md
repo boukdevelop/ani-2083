@@ -3,7 +3,7 @@
 > **Objectif** : livrer une application Python (webcam + image) qui détecte un visage, l'identifie
 > parmi les étudiants enregistrés et retourne « Unknown / Inconnu » si la confiance est insuffisante.
 > **Durée** : 6 jours de travail (06 → 12 octobre 2026, J7 = tampon / démo).
-> **Base conceptuelle** : voir `week-1/explainHIm.md` et `week-1/pré-requis.md`.
+> **Base conceptuelle** : voir `week-1/`[explainHIm.md](explainHIm.md) et `week-1/`[pré-requis.md](pré-requis.md).
 
 ---
 
