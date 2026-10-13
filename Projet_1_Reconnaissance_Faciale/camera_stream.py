@@ -17,7 +17,7 @@ class CameraStream:
            return False, None, None
 
         # capture de la photo brute 
-        ret, frame_bgr = self.cap()
+        ret, frame_bgr = self.cap.read()
         if not ret:
             return False, None, None
 
