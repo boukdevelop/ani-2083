@@ -13,11 +13,11 @@ class CameraStream:
         return self.cap.isOpened() # renvoi true quand la camera est ouverte
 
     def read_frame(self):
-        if self.cap is None or not self.cap.isOpened()
+        if self.cap is None or not self.cap.isOpened() :
            return False, None, None
 
         # capture de la photo brute 
-        ret, frame_bgr = self.cap()
+        ret, frame_bgr = self.cap.read()
         if not ret:
             return False, None, None
 
