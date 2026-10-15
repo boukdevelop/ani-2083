@@ -68,6 +68,7 @@ class CameraStream:
         if self.cap is not None and self.cap.isOpened():
             self.cap.release()
 
+"""Lignes de test"""
 
 if __name__ == "__main__":
   cam = CameraStream()
@@ -86,6 +87,6 @@ if __name__ == "__main__":
       if cv2.waitKey(1) & 0xFF == ord("q"):
         break
 
-    cam.release()  #[cite: 5]
-    cv2.destroyAllWindows()  #[cite: 5]
+    cam.release() 
+    cv2.destroyAllWindows() 
         
