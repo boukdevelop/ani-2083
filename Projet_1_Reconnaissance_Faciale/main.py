@@ -8,18 +8,17 @@ class MainApp:
     def __init__(self):
         self.app = AppInterface()
         
-        # 1. Initialisation de la caméra (échelle 0.25 pour fluidifier le traitement)
+        # Initialisation de la caméra (échelle 0.25 pour fluidifier le traitement)
         self.camera = CameraStream(src=0, scale=0.25)
         if not self.camera.open():
-            print("❌ Erreur : Impossible d'ouvrir la caméra.")
+            print("Erreur : Impossible d'ouvrir la caméra.")
             return
 
-        # 2. Chargement du module de reconnaissance (FaceMatcher)
-        # Assure-toi que encoded_faces.pkl a bien été généré à la racine ou dans le dossier
+        # Chargement du module de reconnaissance (FaceMatcher)
         try:
             self.matcher = FaceMatcher("encoded_faces.pkl", tolerance=0.50)
         except Exception as e:
-            print(f"⚠️ Avertissement FaceMatcher : {e}")
+            print(f"Avertissement FaceMatcher : {e}")
             self.matcher = None
 
         # Démarrage de la boucle vidéo
@@ -30,9 +29,7 @@ class MainApp:
         ret, frame_bgr, frame_rgb_small = self.camera.read_frame()
         
         if ret:
-            # Si le matcher est actif, on cherche à reconnaître les visages sur l'image réduite
             if self.matcher is not None and self.matcher.known_encodings is not None:
-                # Détection des positions des visages sur la petite image RGB
                 face_locations = face_recognition.face_locations(frame_rgb_small, model="hog")
                 face_encodings = face_recognition.face_encodings(frame_rgb_small, face_locations)
 
@@ -47,7 +44,7 @@ class MainApp:
                     left = int(left * 4)
 
                     # Choix de la couleur selon le résultat (Vert si reconnu, Rouge si inconnu)
-                    color = (0, 255, 0) if name != "Unknown / Inconnu" else (0, 0, 255)
+                    color = (0, 255, 0) if name != "Inconnu" else (0, 0, 255)
 
                     # Dessiner le rectangle et le texte sur l'image BGR d'origine
                     cv2.rectangle(frame_bgr, (left, top), (right, bottom), color, 2)
@@ -64,7 +61,7 @@ class MainApp:
 
     def run(self):
         self.app.mainloop()
-        # Libération propre de la caméra à la fermeture
+        # Libération de la caméra à la fermeture
         self.camera.release()
 
 if __name__ == "__main__":
