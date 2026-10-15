@@ -23,15 +23,15 @@
 # --- Cœur IA / reconnaissance faciale ---
 face_recognition==1.3.0
 face-recognition-models==0.3.0
-dlib==19.24.99              # via wheel communautaire (voir ci-dessus)
+#dlib==19.24.6            # via wheel communautaire (voir ci-dessus)
 
 # --- Traitement d'image / vidéo ---
 # ⚠️ numpy doit rester en 1.x : dlib 19.24.99 est INCOMPATIBLE avec numpy 2.x
 #    (erreur "Unsupported image type, must be 8bit gray or RGB image")
 numpy==1.26.4
 # ⚠️ opencv 4.10.0.84 est la dernière version compatible numpy 1.x
-opencv-python==4.10.0.84
-Pillow==12.3.0
+opencv-python==4.11.0.86
+Pillow
 
 # --- Interface graphique ---
 customtkinter==6.0.0
@@ -41,3 +41,4 @@ customtkinter==6.0.0
 setuptools<81
 click>=6.0
 darkdetect
+# bonjour python3
