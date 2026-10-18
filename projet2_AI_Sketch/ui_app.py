@@ -399,7 +399,7 @@ class MainWindow(
                     percentage
                 )  # Appel de la méthode 'setValue' sur la barre de progression d'indice 'i' pour actualiser sa jauge visuelle
 
-
+'''zone de test : a supprimer avant d'appeler ce fichier ailleur'''
 if (
     __name__ == "__main__"
 ):  # Opération conditionnelle globale : vérifie si le script est exécuté directement en tant que programme principal (et non importé ailleurs)
