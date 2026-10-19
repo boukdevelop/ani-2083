@@ -2,7 +2,7 @@ import os
 import face_recognition
 import cv2
 
-def audit_dataset(base_dir="Projet_1_Reconnaissance_Faciale/data/known_faces"):
+def audit_dataset(base_dir="data/known_faces"):
     if not os.path.exists(base_dir):
         print(f"Le dossier {base_dir} n'existe pas encore. Lance d'abord capture_dataset.py.")
         return

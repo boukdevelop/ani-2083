@@ -33,7 +33,7 @@ def capture_person_dataset():
         print("❌ Nom invalide. Annulation.")
         return
 
-    output_dir = os.path.join("Projet_1_Reconnaissance_Faciale\data", "known_faces", person_name)
+    output_dir = os.path.join("data", "known_faces", person_name)
     os.makedirs(output_dir, exist_ok=True)
 
     existing_files = [f for f in os.listdir(output_dir) if f.endswith(('.jpg', '.png'))]

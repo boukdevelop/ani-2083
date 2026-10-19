@@ -1,0 +1,24 @@
+# === Core Machine Learning & Calcul Numérique ===
+tensorflow>=2.15.0,<2.17.0
+numpy>=1.26.0,<2.0.0
+scikit-learn>=1.4.0
+
+# === Traitement d'Images & Vision par Ordinateur ===
+opencv-python>=4.9.0.80
+Pillow>=10.2.0
+
+# === Interface Graphique (Choix par défaut : Desktop PyQt6) ===
+PyQt6>=6.6.1
+
+# === Alternative Web (Si option Web choisie) ===
+Flask>=3.0.2
+flask-cors>=4.0.0
+
+# === Visualisation & Évaluation ===
+matplotlib>=3.8.0
+seaborn>=0.13.0
+
+# === Qualité de Code, Tests & Utilitaires ===
+pytest>=8.0.0
+requests>=2.31.0
+tqdm>=4.66.0
