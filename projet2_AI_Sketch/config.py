@@ -29,8 +29,10 @@ CLASSES = [
     "car", 
     "tree", 
     "sun", 
-    "bicycle", 
+    "umbrella", 
     "apple", 
+    "airplane", 
+    "fish", 
     "star"
 ]
 
