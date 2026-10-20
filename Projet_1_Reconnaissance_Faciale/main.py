@@ -46,11 +46,12 @@ class MainApp:
                     self.face_names = []
                     for face_encoding in face_encodings:
                         name, confidence = self.matcher.match(face_encoding)
-                        if name != "Inconnu":
+                        is_known = (name != "Unknown / Inconnu")
+                        if is_known:
                             display_name = f"{name} ({confidence:.1f}%)"
                         else:
                             display_name = f"Inconnu ({confidence:.1f}%)"
-                        self.face_names.append((display_name, name != "Inconnu"))
+                        self.face_names.append((display_name, is_known))
 
             for (top, right, bottom, left), (display_name, is_known) in zip(self.face_locations, self.face_names):
                 # Remettre à l'échelle d'origine
