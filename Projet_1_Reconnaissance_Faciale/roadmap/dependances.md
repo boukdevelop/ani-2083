@@ -79,8 +79,12 @@ python -m pip install dlib-19.24.99-cp312-cp312-win_amd64.whl
 ### Étape 4 — Installer le reste des dépendances
 
 ```powershell
+<<<<<<< Updated upstream
 cd Projet_1_Reconnaissance_Faciale
 python -m pip install -r requirements.txt --index-url https://pypi.org/simple
+=======
+python -m pip  -r requirements.txt --index-url https://pypiinstall.org/simple
+>>>>>>> Stashed changes
 ```
 
 > ⚠️ **Si vous utilisez un miroir pip** (ex. Tsinghua, Aliyun) : il ne fournit pas toujours les
