@@ -103,10 +103,3 @@ encoded_faces.pkl
 ---
 
 ## 6. Bonnes pratiques
-
-- **Puller souvent** : au moins une fois par jour, avant de commencer à coder.
-- **Tester avant de pousser** : vérifier que son module s'exécute sans erreur.
-- **PR courte** : limiter à un module / une fonctionnalité pour faciliter la relecture.
-- **Communiquer** : prévenir l'équipe sur le canal de discussion avant de toucher un fichier partagé
-  (`main.py`, `requirements.txt`).
-- **Protéger `main`** : activer la protection de branche dans GitHub (Settings → Branches).
