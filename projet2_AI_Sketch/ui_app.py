@@ -188,7 +188,7 @@ class MainWindow(QMainWindow):
         header_layout = QHBoxLayout(header_frame)
         header_layout.setContentsMargins(20, 12, 20, 12)
 
-        header_title = QLabel("🎨 AI SKETCH RECOGNIZER PRO")
+        header_title = QLabel(" AI SKETCH RECOGNIZER PRO")
         header_title.setFont(QFont("Segoe UI", 16, QFont.Weight.Bold))
         header_title.setStyleSheet("color: #ffffff;")
 
@@ -249,7 +249,7 @@ class MainWindow(QMainWindow):
             btn_color.clicked.connect(lambda _, c=hex_code: self.change_color(c))
             toolbar_layout.addWidget(btn_color)
 
-        btn_custom_color = QPushButton("🎨 Palette")
+        btn_custom_color = QPushButton(" Palette")
         btn_custom_color.setStyleSheet("padding: 4px 8px;")
         btn_custom_color.clicked.connect(self.choose_custom_color)
         toolbar_layout.addWidget(btn_custom_color)
@@ -285,22 +285,22 @@ class MainWindow(QMainWindow):
         # Boutons d'actions
         action_layout = QHBoxLayout()
 
-        self.btn_clear = QPushButton("🗑️ Effacer Tout")
+        self.btn_clear = QPushButton("Effacer Tout")
         self.btn_clear.setStyleSheet("background-color: #f44336; color: white; font-weight: bold; padding: 10px; border-radius: 5px;")
         self.btn_clear.clicked.connect(self.canvas.clear)
         action_layout.addWidget(self.btn_clear)
 
-        self.btn_save = QPushButton("💾 Enregistrer")
+        self.btn_save = QPushButton("Enregistrer")
         self.btn_save.setStyleSheet("background-color: #008CBA; color: white; font-weight: bold; padding: 10px; border-radius: 5px;")
         self.btn_save.clicked.connect(self.on_save_clicked)
         action_layout.addWidget(self.btn_save)
 
-        self.btn_sketch = QPushButton("✏️ Effet Esquisse")
+        self.btn_sketch = QPushButton("Effet Esquisse")
         self.btn_sketch.setStyleSheet("background-color: #8E44AD; color: white; font-weight: bold; padding: 10px; border-radius: 5px;")
         self.btn_sketch.clicked.connect(self.on_sketch_clicked)
         action_layout.addWidget(self.btn_sketch)
 
-        self.btn_predict = QPushButton("⚡ Reconnaître (IA)")
+        self.btn_predict = QPushButton("Reconnaître")
         self.btn_predict.setStyleSheet("background-color: #2ECC71; color: white; font-weight: bold; padding: 10px; border-radius: 5px; font-size: 14px;")
         self.btn_predict.clicked.connect(self.on_predict_clicked)
         action_layout.addWidget(self.btn_predict)
@@ -313,7 +313,7 @@ class MainWindow(QMainWindow):
         right_box = QVBoxLayout()
 
         # Group Box : Zone d'Instructions Étape par Étape
-        instructions_group = QGroupBox("📌 Guide d'Utilisation")
+        instructions_group = QGroupBox("Guide d'Utilisation")
         instructions_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -335,7 +335,7 @@ class MainWindow(QMainWindow):
             ("1. Dessinez", "Tracez un objet sur le canvas blanc (chat, maison, arbre...)."),
             ("2. Personnalisez", "Ajustez la couleur et l'épaisseur du pinceau selon vos besoins."),
             ("3. Appliquez les effets", "Sauvegardez votre dessin ou appliquez l'effet Esquisse OpenCV."),
-            ("4. Analysez", "Cliquez sur '⚡ Reconnaître' pour afficher la prédiction de l'IA."),
+            ("4. Analysez", "Cliquez sur 'Reconnaître' pour afficher la prédiction de l'IA."),
         ]
 
         for step_title, step_desc in steps:
@@ -347,7 +347,7 @@ class MainWindow(QMainWindow):
         right_box.addWidget(instructions_group)
 
         # Group Box : Résultats du Top 3
-        results_group = QGroupBox("📊 Résultats de la Prédiction (Top 3)")
+        results_group = QGroupBox("Résultats de la Prédiction (Top 3)")
         results_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;

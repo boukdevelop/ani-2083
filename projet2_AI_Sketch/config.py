@@ -7,15 +7,12 @@ import os
 # Nombre d'échantillons par classe pour garantir l'équilibrage
 SAMPLES_PER_CLASS = 5000 
 
-# Dossiers de stockage
-DATA_DIR = 'data'
-RAW_DATA_DIR = os.path.join(DATA_DIR, 'raw')
-PROCESSED_DATA_DIR = os.path.join(DATA_DIR, 'processed')
-
 # Chemins des dossiers
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(BASE_DIR, 'data')
+RAW_DATA_DIR = os.path.join(DATA_DIR, 'raw')
+PROCESSED_DATA_DIR = os.path.join(DATA_DIR, 'processed')
 MODEL_DIR = os.path.join(BASE_DIR, "models")
-DATA_DIR = os.path.join(BASE_DIR, "data")
 
 # Paramètres du modèle et des images
 IMAGE_SIZE = (28, 28)
@@ -29,8 +26,10 @@ CLASSES = [
     "car", 
     "tree", 
     "sun", 
-    "bicycle", 
+    "umbrella", 
     "apple", 
+    "airplane", 
+    "fish", 
     "star"
 ]
 

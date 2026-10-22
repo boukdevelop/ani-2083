@@ -66,12 +66,19 @@ def train_and_export_model(
     logger.info(f"Train: {X_train.shape} | Val: {X_val.shape} | Test: {X_test.shape}")
     logger.info(f"Classes : {categories}")
 
-    # Garde-fous
+    # Garde-fous et encodage One-Hot des labels
     num_classes = len(categories)
-    assert y_train.shape[1] == num_classes, (
-        f"Incohérence : y_train a {y_train.shape[1]} colonnes, "
-        f"mais {num_classes} classes attendues."
-    )
+    if len(y_train.shape) > 1:
+        assert y_train.shape[1] == num_classes, (
+            f"Incohérence : y_train a {y_train.shape[1]} colonnes, "
+            f"mais {num_classes} classes attendues."
+        )
+        y_train_cat, y_val_cat, y_test_cat = y_train, y_val, y_test
+    else:
+        y_train_cat = tf.keras.utils.to_categorical(y_train, num_classes)
+        y_val_cat = tf.keras.utils.to_categorical(y_val, num_classes)
+        y_test_cat = tf.keras.utils.to_categorical(y_test, num_classes)
+
     assert X_train.shape[1:] == input_shape, (
         f"Shape d'entrée incohérente : {X_train.shape[1:]} != {input_shape}"
     )
@@ -105,8 +112,8 @@ def train_and_export_model(
     logger.info("Démarrage de l'entraînement...")
     t0 = time.time()
     history = model.fit(
-        X_train, y_train,
-        validation_data=(X_val, y_val),
+        X_train, y_train_cat,
+        validation_data=(X_val, y_val_cat),
         epochs=epochs,
         batch_size=batch_size,
         callbacks=callbacks,
@@ -116,7 +123,7 @@ def train_and_export_model(
     logger.info(f"Entraînement terminé en {duree:.1f}s")
 
     # ---------- 6. Évaluation sur le test ----------
-    test_loss, test_acc = model.evaluate(X_test, y_test, verbose=0)
+    test_loss, test_acc = model.evaluate(X_test, y_test_cat, verbose=0)
     logger.info(f"Test — accuracy: {test_acc:.4f} | loss: {test_loss:.4f}")
 
     if test_acc < 0.90:
@@ -174,14 +181,17 @@ if __name__ == "__main__":
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     )
     from config import (
-        DATASET_FILE_PATH, MODEL_FILE_PATH, CLASSES_FILE_PATH, CATEGORIES,
+        PROCESSED_DATA_DIR, MODEL_PATH, CLASSES_PATH, CLASSES,
     )
+    import os
+
+    dataset_file = os.path.join(PROCESSED_DATA_DIR, "dataset.npz")
 
     rapport = train_and_export_model(
-        dataset_path=str(DATASET_FILE_PATH),
-        model_export_path=str(MODEL_FILE_PATH),
-        classes_export_path=str(CLASSES_FILE_PATH),
-        categories=CATEGORIES,
+        dataset_path=dataset_file,
+        model_export_path=MODEL_PATH,
+        classes_export_path=CLASSES_PATH,
+        categories=CLASSES,
     )
     print("\n=== RAPPORT ===")
     for k, v in rapport.items():
