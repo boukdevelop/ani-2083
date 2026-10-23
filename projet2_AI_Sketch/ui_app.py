@@ -1,100 +1,81 @@
 """
-ce code sert a creer une fenetre de dessin a la souris.
-le dessin obtenu sera Convertit en une matrice/tableau NumPy (au format RVB)
-afin qu'il puisse être exploité et analysé par un modèle d'intelligence artificielle
-la methode qui retourne cette matrice est la fonction get_image_as_numpy() de la classe DrawingCanvas
-
+ui_app.py — Interface Utilisateur Professionnelle (PyQt6)
+Application interactive de dessin et de reconnaissance de croquis par IA.
 """
 
-import sys  # Importation du module natif 'sys' (appel du module système pour gérer les arguments et la sortie du programme)
+import sys
 import os
-import numpy as np  # Importation de la bibliothèque 'numpy' sous l'alias 'np' (appel du module pour le calcul matriciel et la manipulation de tableaux de pixels)
 import cv2
+import numpy as np
 
 from PyQt6.QtWidgets import (
-    QApplication,  # Classe pour gérer l'initialisation et la boucle principale de l'application
-    QMainWindow,  # Classe pour créer la fenêtre principale de l'application
-    QWidget,  # Classe de base pour tous les objets visuels et conteneurs
-    QVBoxLayout,  # Gestionnaire de disposition vertical (empile les éléments de haut en bas)
-    QHBoxLayout,  # Gestionnaire de disposition horizontal (aligne les éléments côte à côte)
-    QPushButton,  # Classe pour créer des boutons cliquables
-    QLabel,  # Classe pour afficher du texte statique ou des informations
-    QProgressBar,  # Classe pour créer des barres de progression horizontales (jauges de score)
-    QGroupBox,  # Classe pour créer un cadre visuel étiqueté regroupant des éléments
+    QApplication,
+    QMainWindow,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QPushButton,
+    QLabel,
+    QProgressBar,
+    QFrame,
     QSlider,
     QSpinBox,
     QColorDialog,
-    QFrame,
-    QSplitter,
 )
-
-# Importation de classes utilitaires et constantes depuis PyQt6.QtCore
 from PyQt6.QtCore import Qt, QPoint, QSize
-
-# Importation des classes graphiques de rendu et de gestion d'image depuis PyQt6.QtGui
-from PyQt6.QtGui import QPainter, QPen, QImage, QColor, QFont, QIcon
+from PyQt6.QtGui import QPainter, QPen, QImage, QColor, QFont, QCursor
 
 from bonus_filters import BonusFilters
 
 
 class DrawingCanvas(QWidget):
     """
-    Widget personnalisable pour le dessin interactif à la souris.
-    Offre le choix de la couleur, de l'épaisseur du pinceau et gère le redimensionnement.
+    Zone de dessin interactif a la souris avec support du pinceau et de la gomme.
     """
-    # constructeur de la classe DrawingCanvas.
     def __init__(self, parent=None):
-        super().__init__(parent) # Appelle le constructeur de la classe parente (QWidget de PyQt6) pour initialiser correctement le composant graphique de base.
-        self.setMinimumSize(400, 400) #Fixe la taille minimale du canvas à 400x400 pixels, évitant qu'il ne devienne trop petit lors du redimensionnement de la fenêtre.
+        super().__init__(parent)
+        self.setMinimumSize(420, 420)
+        self.setCursor(QCursor(Qt.CursorShape.CrossCursor))
 
-        self.pen_width = 12 # Initialise l'épaisseur par défaut du pinceau à 12 pixels.
-        self.pen_color = QColor(0, 0, 0) # Définit la couleur initiale du pinceau en noir au format RGB (0, 0, 0).
-        self.drawing = False # Crée un indicateur (un drapeau booléen) qui vaut False par défaut. Il passera à True uniquement lorsque l'utilisateur cliquera et maintiendra le bouton de la souris enfoncé pour dessiner.
-        self.last_point = QPoint() # Initialise un objet point vide (QPoint) qui servira à mémoriser la dernière position de la souris afin de relier les points entre eux par un trait continu.
+        self.pen_width = 14
+        self.pen_color = QColor(20, 20, 20)
+        self.is_eraser = False
+        self.drawing = False
+        self.last_point = QPoint()
 
-        # Image en mémoire tampon
-        self.image = QImage(QSize(400, 400), QImage.Format.Format_RGB32) # Crée une image en mémoire tampon de 400x400 pixels avec un encodage des couleurs sur 32 bits (RGB32). C'est crucial : le dessin ne se fait pas directement à l'écran, mais sur cette image cachée en mémoire pour éviter qu'il ne s'efface lors des rafraîchissements de la fenêtre.
-        self.image.fill(Qt.GlobalColor.white) # Remplit cette image en mémoire avec un fond entièrement blanc pour démarrer sur une "feuille blanche"
+        self.image = QImage(QSize(500, 500), QImage.Format.Format_RGB32)
+        self.image.fill(Qt.GlobalColor.white)
 
-    """
-    fonction permet de modifier dynamiquement l'épaisseur (la taille) du pinceau utilisé pour dessiner.
+    def set_pen_width(self, width: int):
+        self.pen_width = width
 
-    """
-    def set_pen_width(self, width: int): # Définit la méthode qui prend en paramètre un entier (width) représentant la nouvelle taille du pinceau en pixels.
-        self.pen_width = width # Met à jour la variable interne self.pen_width de l'objet avec la nouvelle valeur reçue. Cette valeur sera ensuite utilisée lors de la création du stylo (QPen) lorsque l'utilisateur tracera un trait sur le canvas.
+    def set_pen_color(self, color: QColor):
+        self.pen_color = color
+        self.is_eraser = False
 
-    """
-    Cette fonction permet de modifier dynamiquement la couleur du pinceau utilisé pour dessiner sur le canvas.
+    def set_eraser_mode(self, enabled: bool):
+        self.is_eraser = enabled
 
-    """
-    def set_pen_color(self, color: QColor): # Définit la méthode qui prend en paramètre un objet de type QColor (provenant de PyQt6) représentant la nouvelle couleur à appliquer.
-        self.pen_color = color # Met à jour la variable interne self.pen_color de l'objet avec cette nouvelle couleur. Cette couleur sera utilisée lors de la création du stylo (QPen) lorsque l'utilisateur tracera un trait
+    def clear(self) -> None:
+        self.image.fill(Qt.GlobalColor.white)
+        self.update()
 
-
-    """
-    Cette fonction permet de réinitialiser entièrement la zone de dessin en effaçant tout ce que l'utilisateur a tracé pour retrouver une "feuille blanche".
-    """
-    def clear(self) -> None: # Définit la méthode clear qui ne prend aucun paramètre supplémentaire (à part self) et ne retourne aucune valeur (None).
-        self.image.fill(Qt.GlobalColor.white) # Remplit de nouveau l'image stockée en mémoire tampon (self.image) avec du blanc (Qt.GlobalColor.white), ce qui a pour effet d'effacer tous les traits qui y avaient été dessinés.
-        self.update() # Force le widget à se rafraîchir en déclenchant un événement de peinture (paintEvent). Cela permet de mettre à jour immédiatement l'affichage à l'écran pour que l'utilisateur voie le canvas redevenir blanc.
-
-    """
-    Cette fonction est un gestionnaire d'événements natif de PyQt6. Elle est déclenchée automatiquement par le système dès que l'utilisateur clique avec la souris sur le canvas. 
-    """
     def mousePressEvent(self, event) -> None:
         if event.button() == Qt.MouseButton.LeftButton:
             self.drawing = True
             self.last_point = event.position().toPoint()
 
-    """
-    Cette fonction est également un gestionnaire d'événements natif de PyQt6. Elle est appelée en continu par le système chaque fois que l'utilisateur déplace la souris sur le canvas. C'est le cœur du système de dessin : c'est elle qui trace les traits à l'écran lorsque la souris bouge.
-    """
     def mouseMoveEvent(self, event) -> None:
         if self.drawing and (event.buttons() & Qt.MouseButton.LeftButton):
             painter = QPainter(self.image)
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+
+            active_color = QColor(255, 255, 255) if self.is_eraser else self.pen_color
+            active_width = self.pen_width * 2 if self.is_eraser else self.pen_width
+
             pen = QPen(
-                self.pen_color,
-                self.pen_width,
+                active_color,
+                active_width,
                 Qt.PenStyle.SolidLine,
                 Qt.PenCapStyle.RoundCap,
                 Qt.PenJoinStyle.RoundJoin,
@@ -104,25 +85,15 @@ class DrawingCanvas(QWidget):
             self.last_point = event.position().toPoint()
             self.update()
 
-    """
-    Cette fonction est également un gestionnaire d'événements natif de PyQt6. Elle est déclenchée automatiquement dès que l'utilisateur relâche le bouton de la souris après avoir dessiné.
-    """
     def mouseReleaseEvent(self, event) -> None:
         if event.button() == Qt.MouseButton.LeftButton:
             self.drawing = False
 
-    """
-    Cette fonction est un gestionnaire d'événements natif crucial de PyQt6. Elle est appelée automatiquement par le système chaque fois que le widget doit être affiché ou rafraîchi à l'écran (par exemple, au lancement de l'application, lorsque la fenêtre est redimensionnée, ou chaque fois que la fonction self.update() est appelée après un coup de pinceau).
-    """
     def paintEvent(self, event) -> None:
         canvas_painter = QPainter(self)
         canvas_painter.drawImage(0, 0, self.image)
 
-    """
-    Cette fonction est un gestionnaire d'événements natif de PyQt6. Elle est déclenchée automatiquement par le système chaque fois que l'utilisateur redimensionne la fenêtre ou le widget du canvas. Son rôle crucial est d'empêcher la perte du dessin lorsque la zone de travail s'agrandit.
-    """
     def resizeEvent(self, event) -> None:
-        """Conserve le contenu du dessin lors du redimensionnement de la fenêtre."""
         if self.width() > self.image.width() or self.height() > self.image.height():
             new_w = max(self.width(), self.image.width())
             new_h = max(self.height(), self.image.height())
@@ -135,35 +106,58 @@ class DrawingCanvas(QWidget):
 
         super().resizeEvent(event)
 
-    """
-    
-    """
     def get_image_as_numpy(self) -> np.ndarray:
-        """Convertit le dessin en matrice NumPy (RGB) pour l'IA."""
+        """Retourne la matrice NumPy (RGB) du dessin actuel."""
         width = self.image.width()
         height = self.image.height()
-
         ptr = self.image.bits()
         ptr.setsize(self.image.sizeInBytes())
         arr = np.array(ptr).reshape(height, width, 4)
-
-        return arr[:, :, :3]  # Retourne les 3 canaux RVB
+        return arr[:, :, :3]
 
 
 class MainWindow(QMainWindow):
     """
-    Fenêtre Principale Redimensionnable avec Style Professionnel Modernisé.
+    Fenetre principale moderne au design professionnel (UI/UX Slate Dark / Clean Pro).
     """
 
-    """
-    C'est le constructeur de la fenêtre principale. Il est appelé automatiquement lors de l'instanciation de la classe. Son rôle est de configurer la structure générale de la fenêtre (titre, dimensions minimales, style) et de déclencher la construction de l'interface utilisateur.
-    """
-    def __init__(self, classifier=None): # Appelle le constructeur de la classe parente (QMainWindow de PyQt6) pour initialiser la fenêtre principale.
+    CLASSES_DISPLAY = {
+        "cat": "Chat",
+        "house": "Maison",
+        "car": "Voiture",
+        "tree": "Arbre",
+        "sun": "Soleil",
+        "umbrella": "Parapluie",
+        "apple": "Pomme",
+        "airplane": "Avion",
+        "fish": "Poisson",
+        "star": "Etoile",
+    }
+
+    def __init__(self, classifier=None):
         super().__init__()
         self.classifier = classifier
         self.setWindowTitle("AI Sketch Recognizer - Studio Pro")
-        self.resize(1150, 750)
-        self.setMinimumSize(900, 600)
+        self.resize(1180, 760)
+        self.setMinimumSize(960, 640)
+
+        self.setStyleSheet("""
+            QMainWindow { background-color: #0f172a; }
+            QWidget { color: #e2e8f0; font-family: 'Segoe UI', Roboto, sans-serif; }
+            QFrame#card { background-color: #1e293b; border: 1px solid #334155; border-radius: 12px; }
+            QLabel { background: transparent; }
+            QPushButton { font-weight: 600; border-radius: 8px; padding: 10px 16px; border: none; }
+            QSlider::groove:horizontal { height: 6px; background: #334155; border-radius: 3px; }
+            QSlider::sub-page:horizontal { background: #38bdf8; border-radius: 3px; }
+            QSlider::handle:horizontal {
+                background: #f8fafc; border: 2px solid #0284c7; width: 16px;
+                margin-top: -5px; margin-bottom: -5px; border-radius: 8px;
+            }
+            QSpinBox {
+                background-color: #0f172a; border: 1px solid #334155; border-radius: 6px;
+                padding: 4px 8px; color: #f8fafc; font-weight: bold; min-width: 45px;
+            }
+        """)
 
         self.init_ui()
 
@@ -172,317 +166,363 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central_widget)
 
         main_layout = QVBoxLayout(central_widget)
-        main_layout.setContentsMargins(0, 0, 0, 10)
-        main_layout.setSpacing(10)
+        main_layout.setContentsMargins(20, 16, 20, 20)
+        main_layout.setSpacing(16)
 
-        # -------------------------------------------------------------
-        # 1. EN-TÊTE PROFESSIONNEL (Header Bar)
-        # -------------------------------------------------------------
+        # En-tete
         header_frame = QFrame()
-        header_frame.setStyleSheet("""
-            QFrame {
-                background-color: #1e1e2d;
-                border-bottom: 2px solid #3b3b54;
-            }
-        """)
+        header_frame.setObjectName("card")
         header_layout = QHBoxLayout(header_frame)
-        header_layout.setContentsMargins(20, 12, 20, 12)
+        header_layout.setContentsMargins(22, 14, 22, 14)
 
-        header_title = QLabel(" AI SKETCH RECOGNIZER PRO")
+        title_col = QVBoxLayout()
+        title_col.setSpacing(2)
+
+        header_title = QLabel("AI SKETCH RECOGNIZER")
         header_title.setFont(QFont("Segoe UI", 16, QFont.Weight.Bold))
-        header_title.setStyleSheet("color: #ffffff;")
+        header_title.setStyleSheet("color: #f8fafc; letter-spacing: 1px;")
 
-        header_subtitle = QLabel("Interface Interactive de Reconnaissance de Croquis")
+        header_subtitle = QLabel("Systeme de classification de croquis en temps reel par Reseau Convolutif (CNN)")
         header_subtitle.setFont(QFont("Segoe UI", 10))
-        header_subtitle.setStyleSheet("color: #a2a3b7;")
+        header_subtitle.setStyleSheet("color: #94a3b8;")
 
-        header_layout.addWidget(header_title)
-        header_layout.addSpacing(15)
-        header_layout.addWidget(header_subtitle)
+        title_col.addWidget(header_title)
+        title_col.addWidget(header_subtitle)
+        header_layout.addLayout(title_col)
         header_layout.addStretch()
 
+        is_active = bool(self.classifier and getattr(self.classifier, "model", None))
+        self.badge_status = QLabel("Modele Actif" if is_active else "Mode Simulation")
+        badge_bg = "#064e3b" if is_active else "#78350f"
+        badge_fg = "#34d399" if is_active else "#fde047"
+        self.badge_status.setStyleSheet(f"""
+            background-color: {badge_bg}; color: {badge_fg}; font-size: 11px;
+            font-weight: bold; padding: 6px 14px; border-radius: 14px; border: 1px solid {badge_fg};
+        """)
+        header_layout.addWidget(self.badge_status)
         main_layout.addWidget(header_frame)
 
-        # -------------------------------------------------------------
-        # 2. CONTENU PRINCIPAL (Séparation Gauche / Droite)
-        # -------------------------------------------------------------
+        # Contenu principal
         content_layout = QHBoxLayout()
-        content_layout.setContentsMargins(15, 0, 15, 0)
-        content_layout.setSpacing(15)
+        content_layout.setSpacing(16)
 
-        # --- PANNEAU GAUCHE : Zone de Dessin & Barre d'Outils ---
-        left_box = QVBoxLayout()
+        # Studio de dessin (Gauche)
+        left_card = QFrame()
+        left_card.setObjectName("card")
+        left_layout = QVBoxLayout(left_card)
+        left_layout.setContentsMargins(18, 18, 18, 18)
+        left_layout.setSpacing(14)
 
-        # Barre d'outils supérieure du dessin
-        toolbar_group = QGroupBox("Outils du Pinceau")
-        toolbar_group.setStyleSheet("""
-            QGroupBox {
-                font-weight: bold;
-                border: 1px solid #dcdcdc;
-                border-radius: 6px;
-                margin-top: 6px;
-                padding-top: 10px;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px;
-            }
-        """)
-        toolbar_layout = QHBoxLayout(toolbar_group)
+        toolbar = QHBoxLayout()
+        toolbar.setSpacing(10)
 
-        # Sélecteurs de couleur rapide
-        toolbar_layout.addWidget(QLabel("Couleur :"))
-        colors = [
-            ("#000000", "Noir"),
-            ("#2196F3", "Bleu"),
-            ("#F44336", "Rouge"),
-            ("#4CAF50", "Vert"),
-            ("#FF9800", "Orange"),
-            ("#FFFFFF", "Gomme"),
-        ]
-        for hex_code, name in colors:
-            btn_color = QPushButton()
-            btn_color.setToolTip(name)
-            btn_color.setFixedSize(26, 26)
-            btn_color.setStyleSheet(f"background-color: {hex_code}; border: 1px solid #888; border-radius: 13px;")
-            btn_color.clicked.connect(lambda _, c=hex_code: self.change_color(c))
-            toolbar_layout.addWidget(btn_color)
+        self.btn_tool_brush = QPushButton("Pinceau")
+        self.btn_tool_brush.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_tool_brush.setStyleSheet("background-color: #0284c7; color: white; padding: 7px 14px;")
+        self.btn_tool_brush.clicked.connect(lambda: self.switch_tool("brush"))
 
-        btn_custom_color = QPushButton(" Palette")
-        btn_custom_color.setStyleSheet("padding: 4px 8px;")
-        btn_custom_color.clicked.connect(self.choose_custom_color)
-        toolbar_layout.addWidget(btn_custom_color)
+        self.btn_tool_eraser = QPushButton("Gomme")
+        self.btn_tool_eraser.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_tool_eraser.setStyleSheet("background-color: #334155; color: #cbd5e1; padding: 7px 14px;")
+        self.btn_tool_eraser.clicked.connect(lambda: self.switch_tool("eraser"))
 
-        toolbar_layout.addSpacing(15)
+        toolbar.addWidget(self.btn_tool_brush)
+        toolbar.addWidget(self.btn_tool_eraser)
 
-        # Taille du pinceau
-        toolbar_layout.addWidget(QLabel("Épaisseur :"))
+        sep = QFrame()
+        sep.setFrameShape(QFrame.Shape.VLine)
+        sep.setStyleSheet("color: #334155;")
+        toolbar.addWidget(sep)
+
+        toolbar.addWidget(QLabel("Couleur :"))
+        for hex_code, name in [("#0f172a", "Noir"), ("#2563eb", "Bleu"), ("#dc2626", "Rouge"), ("#16a34a", "Vert"), ("#d97706", "Ambre")]:
+            btn_c = QPushButton()
+            btn_c.setToolTip(name)
+            btn_c.setFixedSize(24, 24)
+            btn_c.setCursor(Qt.CursorShape.PointingHandCursor)
+            btn_c.setStyleSheet(f"background-color: {hex_code}; border: 2px solid #64748b; border-radius: 12px;")
+            btn_c.clicked.connect(lambda _, c=hex_code: self.change_color(c))
+            toolbar.addWidget(btn_c)
+
+        btn_custom = QPushButton("Palette...")
+        btn_custom.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn_custom.setStyleSheet("background-color: #1e293b; border: 1px solid #475569; color: #cbd5e1; padding: 5px 10px; font-size: 12px;")
+        btn_custom.clicked.connect(self.choose_custom_color)
+        toolbar.addWidget(btn_custom)
+
+        sep2 = QFrame()
+        sep2.setFrameShape(QFrame.Shape.VLine)
+        sep2.setStyleSheet("color: #334155;")
+        toolbar.addWidget(sep2)
+
+        toolbar.addWidget(QLabel("Epaisseur :"))
         self.slider_width = QSlider(Qt.Orientation.Horizontal)
-        self.slider_width.setRange(2, 50)
-        self.slider_width.setValue(12)
-        self.slider_width.setFixedWidth(120)
+        self.slider_width.setRange(4, 50)
+        self.slider_width.setValue(14)
+        self.slider_width.setFixedWidth(100)
 
         self.spin_width = QSpinBox()
-        self.spin_width.setRange(2, 50)
-        self.spin_width.setValue(12)
+        self.spin_width.setRange(4, 50)
+        self.spin_width.setValue(14)
 
         self.slider_width.valueChanged.connect(self.spin_width.setValue)
         self.spin_width.valueChanged.connect(self.slider_width.setValue)
-        self.spin_width.valueChanged.connect(self.change_pen_width)
 
-        toolbar_layout.addWidget(self.slider_width)
-        toolbar_layout.addWidget(self.spin_width)
+        toolbar.addWidget(self.slider_width)
+        toolbar.addWidget(self.spin_width)
+        toolbar.addStretch()
+        left_layout.addLayout(toolbar)
 
-        toolbar_layout.addStretch()
-        left_box.addWidget(toolbar_group)
-
-        # Canvas de dessin
+        # Canvas
+        self.canvas_container = QFrame()
+        self.canvas_container.setStyleSheet("background-color: #ffffff; border: 2px solid #334155; border-radius: 10px;")
+        c_layout = QVBoxLayout(self.canvas_container)
+        c_layout.setContentsMargins(4, 4, 4, 4)
         self.canvas = DrawingCanvas()
-        self.canvas.setStyleSheet("border: 2px solid #b0b0b0; border-radius: 6px; background-color: white;")
-        left_box.addWidget(self.canvas, stretch=1)
+        c_layout.addWidget(self.canvas)
+        left_layout.addWidget(self.canvas_container, stretch=1)
 
-        # Boutons d'actions
-        action_layout = QHBoxLayout()
+        # Le canvas doit exister avant de brancher le signal de l'épaisseur
+        self.spin_width.valueChanged.connect(self.canvas.set_pen_width)
+
+        # Actions inferieures
+        actions = QHBoxLayout()
+        actions.setSpacing(12)
 
         self.btn_clear = QPushButton("Effacer Tout")
-        self.btn_clear.setStyleSheet("background-color: #f44336; color: white; font-weight: bold; padding: 10px; border-radius: 5px;")
-        self.btn_clear.clicked.connect(self.canvas.clear)
-        action_layout.addWidget(self.btn_clear)
+        self.btn_clear.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_clear.setStyleSheet("background-color: #334155; color: #f87171; border: 1px solid #475569;")
+        self.btn_clear.clicked.connect(self.on_clear_clicked)
+        actions.addWidget(self.btn_clear)
 
-        self.btn_save = QPushButton("Enregistrer")
-        self.btn_save.setStyleSheet("background-color: #008CBA; color: white; font-weight: bold; padding: 10px; border-radius: 5px;")
+        self.btn_save = QPushButton("Enregistrer Galerie")
+        self.btn_save.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_save.setStyleSheet("background-color: #1e293b; color: #38bdf8; border: 1px solid #0284c7;")
         self.btn_save.clicked.connect(self.on_save_clicked)
-        action_layout.addWidget(self.btn_save)
+        actions.addWidget(self.btn_save)
 
-        self.btn_sketch = QPushButton("Effet Esquisse")
-        self.btn_sketch.setStyleSheet("background-color: #8E44AD; color: white; font-weight: bold; padding: 10px; border-radius: 5px;")
+        self.btn_sketch = QPushButton("Filtre Esquisse")
+        self.btn_sketch.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_sketch.setStyleSheet("background-color: #1e293b; color: #c084fc; border: 1px solid #9333ea;")
         self.btn_sketch.clicked.connect(self.on_sketch_clicked)
-        action_layout.addWidget(self.btn_sketch)
+        actions.addWidget(self.btn_sketch)
 
-        self.btn_predict = QPushButton("Reconnaître")
-        self.btn_predict.setStyleSheet("background-color: #2ECC71; color: white; font-weight: bold; padding: 10px; border-radius: 5px; font-size: 14px;")
+        actions.addStretch()
+
+        self.btn_predict = QPushButton("IDENTIFIER L'OBJET")
+        self.btn_predict.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_predict.setFont(QFont("Segoe UI", 11, QFont.Weight.Bold))
+        self.btn_predict.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #10b981, stop:1 #059669);
+                color: #ffffff; padding: 12px 28px; border-radius: 8px;
+            }
+            QPushButton:hover { background: #10b981; }
+        """)
         self.btn_predict.clicked.connect(self.on_predict_clicked)
-        action_layout.addWidget(self.btn_predict)
+        actions.addWidget(self.btn_predict)
+        left_layout.addLayout(actions)
+        content_layout.addWidget(left_card, stretch=3)
 
-        left_box.addLayout(action_layout)
+        # Panneau d'Analyse IA (Droite)
+        right_card = QFrame()
+        right_card.setObjectName("card")
+        right_layout = QVBoxLayout(right_card)
+        right_layout.setContentsMargins(20, 20, 20, 20)
+        right_layout.setSpacing(18)
 
-        content_layout.addLayout(left_box, stretch=2)
+        sec_title = QLabel("RESULTAT DE LA RECONNAISSANCE")
+        sec_title.setFont(QFont("Segoe UI", 11, QFont.Weight.Bold))
+        sec_title.setStyleSheet("color: #94a3b8; letter-spacing: 1px;")
+        right_layout.addWidget(sec_title)
 
-        # --- PANNEAU DROIT : Instructions & Résultats IA ---
-        right_box = QVBoxLayout()
+        # Carte de resultat
+        self.result_box = QFrame()
+        self.result_box.setMinimumHeight(180)
+        self.result_box.setStyleSheet("background-color: #0f172a; border: 2px solid #334155; border-radius: 12px; padding: 20px;")
+        res_layout = QVBoxLayout(self.result_box)
+        res_layout.setSpacing(10)
+        res_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        # Group Box : Zone d'Instructions Étape par Étape
-        instructions_group = QGroupBox("Guide d'Utilisation")
-        instructions_group.setStyleSheet("""
-            QGroupBox {
-                font-weight: bold;
-                border: 1px solid #dcdcdc;
-                border-radius: 6px;
-                margin-top: 6px;
-                padding-top: 10px;
-                background-color: #f9f9fc;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px;
-            }
+        self.lbl_result_name = QLabel("En attente d'un dessin...")
+        self.lbl_result_name.setFont(QFont("Segoe UI", 20, QFont.Weight.Bold))
+        self.lbl_result_name.setStyleSheet("color: #f8fafc;")
+        self.lbl_result_name.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_result_name.setWordWrap(True)
+        res_layout.addWidget(self.lbl_result_name)
+
+        self.lbl_result_status = QLabel("Tracez un croquis puis cliquez sur Identifier")
+        self.lbl_result_status.setFont(QFont("Segoe UI", 10))
+        self.lbl_result_status.setStyleSheet("color: #94a3b8;")
+        self.lbl_result_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        res_layout.addWidget(self.lbl_result_status)
+
+        res_layout.addSpacing(10)
+
+        # Jauge
+        gauge_container = QVBoxLayout()
+        gauge_container.setSpacing(6)
+
+        gauge_header = QHBoxLayout()
+        lbl_conf_title = QLabel("Indice de confiance :")
+        lbl_conf_title.setFont(QFont("Segoe UI", 10, QFont.Weight.DemiBold))
+        lbl_conf_title.setStyleSheet("color: #94a3b8;")
+
+        self.lbl_confidence_val = QLabel("0.0%")
+        self.lbl_confidence_val.setFont(QFont("Segoe UI", 12, QFont.Weight.Bold))
+        self.lbl_confidence_val.setStyleSheet("color: #38bdf8;")
+
+        gauge_header.addWidget(lbl_conf_title)
+        gauge_header.addStretch()
+        gauge_header.addWidget(self.lbl_confidence_val)
+        gauge_container.addLayout(gauge_header)
+
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setRange(0, 100)
+        self.progress_bar.setValue(0)
+        self.progress_bar.setFixedHeight(14)
+        self.progress_bar.setTextVisible(False)
+        self.progress_bar.setStyleSheet("""
+            QProgressBar { background-color: #1e293b; border: 1px solid #334155; border-radius: 7px; }
+            QProgressBar::chunk { background: #0284c7; border-radius: 6px; }
         """)
-        instructions_layout = QVBoxLayout(instructions_group)
+        gauge_container.addWidget(self.progress_bar)
+        res_layout.addLayout(gauge_container)
+        right_layout.addWidget(self.result_box)
 
-        steps = [
-            ("1. Dessinez", "Tracez un objet sur le canvas blanc (chat, maison, arbre...)."),
-            ("2. Personnalisez", "Ajustez la couleur et l'épaisseur du pinceau selon vos besoins."),
-            ("3. Appliquez les effets", "Sauvegardez votre dessin ou appliquez l'effet Esquisse OpenCV."),
-            ("4. Analysez", "Cliquez sur 'Reconnaître' pour afficher la prédiction de l'IA."),
-        ]
+        # Categories supportees
+        classes_frame = QFrame()
+        classes_frame.setStyleSheet("background-color: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 14px;")
+        classes_layout = QVBoxLayout(classes_frame)
+        classes_layout.setSpacing(8)
 
-        for step_title, step_desc in steps:
-            step_label = QLabel(f"<b>{step_title}</b> : <br><font color='#555'>{step_desc}</font>")
-            step_label.setWordWrap(True)
-            step_label.setStyleSheet("margin-bottom: 6px;")
-            instructions_layout.addWidget(step_label)
+        classes_title = QLabel("10 Categories Reconnues")
+        classes_title.setFont(QFont("Segoe UI", 10, QFont.Weight.Bold))
+        classes_title.setStyleSheet("color: #38bdf8;")
+        classes_layout.addWidget(classes_title)
 
-        right_box.addWidget(instructions_group)
+        lbl_tags = QLabel("Chat • Maison • Voiture • Arbre • Soleil\nParapluie • Pomme • Avion • Poisson • Etoile")
+        lbl_tags.setFont(QFont("Segoe UI", 9))
+        lbl_tags.setStyleSheet("color: #cbd5e1; line-height: 160%;")
+        lbl_tags.setWordWrap(True)
+        classes_layout.addWidget(lbl_tags)
+        right_layout.addWidget(classes_frame)
 
-        # Group Box : Résultats du Top 3
-        results_group = QGroupBox("Résultats de la Prédiction (Top 3)")
-        results_group.setStyleSheet("""
-            QGroupBox {
-                font-weight: bold;
-                border: 1px solid #dcdcdc;
-                border-radius: 6px;
-                margin-top: 6px;
-                padding-top: 10px;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px;
-            }
-        """)
-        results_layout = QVBoxLayout(results_group)
+        right_layout.addStretch()
 
-        self.prediction_labels = []
-        self.progress_bars = []
+        self.lbl_action_status = QLabel("Pret.")
+        self.lbl_action_status.setFont(QFont("Segoe UI", 9))
+        self.lbl_action_status.setStyleSheet("color: #64748b;")
+        right_layout.addWidget(self.lbl_action_status)
 
-        for i in range(3):
-            row_layout = QVBoxLayout()
-            lbl = QLabel(f"Top {i+1} : -")
-            lbl.setFont(QFont("Segoe UI", 10, QFont.Weight.DemiBold))
-
-            bar = QProgressBar()
-            bar.setRange(0, 100)
-            bar.setValue(0)
-            bar.setFixedHeight(22)
-            bar.setStyleSheet("""
-                QProgressBar {
-                    border: 1px solid #ccc;
-                    border-radius: 4px;
-                    text-align: center;
-                    background-color: #f0f0f0;
-                }
-                QProgressBar::chunk {
-                    background-color: #2196F3;
-                    border-radius: 3px;
-                }
-            """)
-
-            row_layout.addWidget(lbl)
-            row_layout.addWidget(bar)
-            results_layout.addLayout(row_layout)
-
-            self.prediction_labels.append(lbl)
-            self.progress_bars.append(bar)
-
-        right_box.addWidget(results_group, stretch=1)
-
-        content_layout.addLayout(right_box, stretch=1)
-
+        content_layout.addWidget(right_card, stretch=2)
         main_layout.addLayout(content_layout)
 
-    # -------------------------------------------------------------
-    # FONCTIONS DE GESTION DU PINCEAU
-    # -------------------------------------------------------------
+    def switch_tool(self, tool_type: str):
+        if tool_type == "eraser":
+            self.canvas.set_eraser_mode(True)
+            self.btn_tool_eraser.setStyleSheet("background-color: #f59e0b; color: #0f172a; font-weight: bold; padding: 7px 14px;")
+            self.btn_tool_brush.setStyleSheet("background-color: #334155; color: #cbd5e1; padding: 7px 14px;")
+            self.lbl_action_status.setText("Outil actif : Gomme")
+        else:
+            self.canvas.set_eraser_mode(False)
+            self.btn_tool_brush.setStyleSheet("background-color: #0284c7; color: white; font-weight: bold; padding: 7px 14px;")
+            self.btn_tool_eraser.setStyleSheet("background-color: #334155; color: #cbd5e1; padding: 7px 14px;")
+            self.lbl_action_status.setText("Outil actif : Pinceau")
 
-    """
-    Cette fonction est appelée chaque fois que l'utilisateur clique sur l'un des boutons de couleur rapide de la barre d'outils (noir, bleu, rouge, vert, orange ou gomme/blanc).
-    """
-    def change_color(self, hex_code: str): # Définit la méthode qui prend en paramètre un code couleur au format hexadécimal sous forme de chaîne de caractères (str), par exemple "#2196F3" pour le bleu.
-        self.canvas.set_pen_color(QColor(hex_code)) # Convertit le code hexadécimal en un objet de couleur PyQt (QColor(hex_code)), puis appelle la méthode set_pen_color du widget de dessin (self.canvas) pour mettre à jour la couleur active du pinceau.
+    def change_color(self, hex_code: str):
+        self.canvas.set_pen_color(QColor(hex_code))
+        self.switch_tool("brush")
 
-    """
-    Cette fonction est déclenchée lorsque l'utilisateur clique sur le bouton "🎨 Palette" de la barre d'outils. Son rôle est d'ouvrir la fenêtre système de sélection de couleurs pour permettre à l'utilisateur de choisir n'importe quelle couleur personnalisée.
-    """
     def choose_custom_color(self):
         color = QColorDialog.getColor()
         if color.isValid():
             self.canvas.set_pen_color(color)
+            self.switch_tool("brush")
 
-    """
-    Cette fonction est appelée chaque fois que l'utilisateur déplace le curseur (QSlider) ou change la valeur numérique dans le sélecteur (QSpinBox) de l'épaisseur du pinceau.
-    """
-    def change_pen_width(self, width: int):
-        self.canvas.set_pen_width(width)
+    def on_clear_clicked(self):
+        self.canvas.clear()
+        self.reset_result_display()
+        self.lbl_action_status.setText("Canvas efface.")
 
-    # -------------------------------------------------------------
-    # FONCTIONS D'ACTIONS
-    # -------------------------------------------------------------
-
-    """
-    Cette fonction est déclenchée lorsque l'utilisateur clique sur le bouton "💾 Enregistrer" de l'interface. Son rôle est de récupérer le dessin actuel, de le convertir pour qu'il soit compatible avec OpenCV, puis de l'envoyer au module externe de filtres pour l'enregistrer dans une galerie.
-    """
     def on_save_clicked(self):
         img_np = self.canvas.get_image_as_numpy()
         try:
             img_bgr = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
             filepath = BonusFilters.save_to_gallery(img_bgr)
-            print(f"Dessin enregistré avec succès dans : {filepath}")
+            self.lbl_action_status.setText(f"Enregistre : {os.path.basename(filepath)}")
         except Exception as e:
-            print(f"Erreur lors de la sauvegarde : {e}")
+            self.lbl_action_status.setText(f"Erreur enregistrement : {e}")
 
-    """
-    Cette fonction est déclenchée lorsque l'utilisateur clique sur le bouton "✏️ Effet Esquisse" de l'interface. Son rôle est de récupérer le dessin actuel, de le transformer en utilisant un filtre artistique OpenCV via une classe externe, puis d'afficher le résultat dans une fenêtre d'aperçu dédiée.
-    """
     def on_sketch_clicked(self):
         img_np = self.canvas.get_image_as_numpy()
         try:
             img_bgr = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
             sketch_img = BonusFilters.apply_sketch_effect(img_bgr)
-            cv2.imshow("Aperçu Effet Esquisse", sketch_img)
+            cv2.imshow("Apercu Filtre Esquisse (Fermer avec une touche)", sketch_img)
             cv2.waitKey(0)
             cv2.destroyAllWindows()
+            self.lbl_action_status.setText("Filtre esquisse applique.")
         except Exception as e:
-            print(f"Erreur lors de l'application du filtre : {e}")
+            self.lbl_action_status.setText(f"Erreur filtre : {e}")
 
-    """
-    Cette fonction est déclenchée lorsque l'utilisateur clique sur le bouton "⚡ Reconnaître (IA)". Son rôle est de récupérer le dessin, de l'envoyer au modèle d'intelligence artificielle pour analyse, puis de mettre à jour l'affichage avec les prédictions (le Top 3).
-    """
     def on_predict_clicked(self):
         img_np = self.canvas.get_image_as_numpy()
 
         if self.classifier is None:
-            self.update_results_display(
-                [("chat (test)", 0.92), ("maison", 0.05), ("arbre", 0.03)]
-            )
+            self.display_result("house", 0.96)
             return
 
         try:
-            predictions = self.classifier.predict(img_np, top_k=3)
-            self.update_results_display(predictions)
-        except Exception as e:
-            print(f"Erreur d'inférence : {e}")
+            # InferenceEngine.predict() retourne directement un tuple (classe, score de confiance)
+            top_class, top_score = self.classifier.predict(img_np)
 
-    """
-    Cette fonction est appelée après chaque prédiction de l'IA (ou lors de la simulation de test). Son rôle est de mettre à jour visuellement les labels textuels et les barres de progression du Top 3 dans l'interface graphique.
-    """
-    def update_results_display(self, predictions):
-        for i, (class_name, score) in enumerate(predictions):
-            if i < len(self.prediction_labels):
-                percentage = int(score * 100)
-                self.prediction_labels[i].setText(f"Top {i+1} : {class_name} ({percentage}%)")
-                self.progress_bars[i].setValue(percentage)
+            self.display_result(top_class, top_score)
+        except Exception as e:
+            self.lbl_action_status.setText(f"Erreur d'inference : {e}")
+
+    def reset_result_display(self):
+        self.lbl_result_name.setText("En attente d'un dessin...")
+        self.lbl_result_status.setText("Tracez un croquis puis cliquez sur Identifier")
+        self.lbl_confidence_val.setText("0.0%")
+        self.progress_bar.setValue(0)
+        self.set_card_state("neutral")
+
+    def display_result(self, class_name: str, confidence: float):
+        percent = int(confidence * 100)
+        self.lbl_confidence_val.setText(f"{percent}% ({confidence:.2f})")
+        self.progress_bar.setValue(percent)
+
+        if "Canvas vide" in class_name:
+            self.lbl_result_name.setText("Canvas vide")
+            self.lbl_result_status.setText("Veuillez tracer un dessin avant de lancer l'analyse.")
+            self.set_card_state("neutral")
+            return
+
+        if any(w in class_name.lower() for w in ["inconnu", "incertain", "pas sur", "pas sûr", "unknown"]):
+            self.lbl_result_name.setText("Inconnu / Pas sur")
+            self.lbl_result_status.setText("L'IA n'est pas assez certaine (confiance < 55%).")
+            self.set_card_state("warning")
+            return
+
+        display_label = self.CLASSES_DISPLAY.get(class_name.lower(), class_name.capitalize())
+        self.lbl_result_name.setText(display_label)
+        self.lbl_result_status.setText(f"Identifie avec succes ({class_name})")
+        self.set_card_state("success")
+        self.lbl_action_status.setText(f"Reconnaissance terminee : {display_label}")
+
+    def set_card_state(self, state: str):
+        if state == "success":
+            border, chunk, color = "#059669", "#10b981", "#34d399"
+        elif state == "warning":
+            border, chunk, color = "#d97706", "#f59e0b", "#f59e0b"
+        else:
+            border, chunk, color = "#334155", "#0284c7", "#f8fafc"
+
+        self.lbl_result_name.setStyleSheet(f"color: {color}; font-weight: bold; background: transparent;")
+        self.lbl_confidence_val.setStyleSheet(f"color: {color}; font-weight: bold;")
+        self.result_box.setStyleSheet(f"background-color: #0f172a; border: 2px solid {border}; border-radius: 12px; padding: 20px;")
+        self.progress_bar.setStyleSheet(f"QProgressBar {{ background-color: #1e293b; border: 1px solid #334155; border-radius: 7px; }} QProgressBar::chunk {{ background: {chunk}; border-radius: 6px; }}")
 
 
 if __name__ == "__main__":

@@ -88,29 +88,28 @@ class InferenceEngine:
 
         return img_array
 
-    def predict(self, image_input, top_k=3):
+    def predict(self, image_input, confidence_threshold=0.55):
         """
-        Effectue la prédiction et retourne le Top-K des classes avec leurs scores de confiance.
+        Effectue la prédiction et retourne le résultat principal avec son score de confiance.
+        Si la confiance est inférieure au seuil, retourne ('Inconnu / Pas sûr', score).
         """
         if self.model is None:
-            # Mode simulation si le modèle du Membre 3 n'est pas encore dispo
-            return [("chat (simulation)", 0.85), ("maison (simulation)", 0.10), ("soleil (simulation)", 0.05)]
+            return ("chat (simulation)", 0.85)
 
         processed_img = self.preprocess_canvas_image(image_input)
 
-        # Si l'image est complètement vide, retourner un statut clair
         if np.max(processed_img) == 0.0:
-            return [("Canvas vide", 0.0)]
+            return ("Canvas vide", 0.0)
 
         predictions = self.model.predict(processed_img, verbose=0)[0]
-        
-        # Récupération des indices des top_k scores les plus élevés
-        top_indices = np.argsort(predictions)[::-1][:top_k]
-        
-        results = []
-        for idx in top_indices:
-            class_name = self.classes[idx] if idx < len(self.classes) else str(idx)
-            confidence = float(predictions[idx])
-            results.append((class_name, confidence))
-            
-        return results
+
+        # Récupération de la meilleure prédiction (1er résultat)
+        best_idx = int(np.argmax(predictions))
+        best_score = float(predictions[best_idx])
+        best_class = self.classes[best_idx] if best_idx < len(self.classes) else str(best_idx)
+
+        # Si la confiance est inférieure au seuil
+        if best_score < confidence_threshold:
+            return ("Inconnu / Pas sûr", best_score)
+
+        return (best_class, best_score)
